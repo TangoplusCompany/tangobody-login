@@ -1,0 +1,83 @@
+export const en = {
+  // Common
+  appTitle: 'Tangobody',
+  systemDetected: 'System detected',
+  language: 'Language',
+  korean: '한국어 (Korean)',
+  english: 'English (Other countries)',
+  auto: 'Auto Detect (Chrome Settings)',
+  loading: 'Processing...',
+  copySuccess: 'Copied to clipboard.',
+  copyFailed: 'Failed to copy.',
+  copy: 'Copy',
+
+  // Login Page
+  login: {
+    title: 'Welcome Back',
+    subtitle: 'Sign in to your Tangobody account',
+    emailLabel: 'Email Address',
+    emailPlaceholder: 'Email (abc@de.fg)',
+    pinLabel: 'PIN Code (4 digits)',
+    pinPlaceholder: 'PIN Code (4 digits)',
+    submitButton: 'Sign In',
+    submitting: 'Signing in...',
+    noAccount: "Don't have an account?",
+    goToSignUp: 'Sign Up',
+    validation: {
+      emailRequired: 'Please enter your email.',
+      emailInvalid: 'Please check the email format (e.g. abc@de.fg).',
+      pinRequired: 'Please enter your PIN code.',
+      pinInvalid: 'PIN code must be a 4-digit number.',
+    },
+  },
+
+  // Sign Up Page
+  signUp: {
+    title: 'Create Account',
+    subtitle: 'Start your healthy journey with Tangobody',
+    emailLabel: 'Email',
+    emailPlaceholder: 'example@domain.com',
+    pinLabel: 'PIN Code (4 digits)',
+    pinPlaceholder: 'Enter 4-digit PIN',
+    pinConfirmLabel: 'Confirm PIN Code',
+    pinConfirmPlaceholder: 'Re-enter 4-digit PIN',
+    birthDateLabel: 'Date of Birth (8 digits)',
+    birthDatePlaceholder: 'YYYYMMDD (e.g. 19950512)',
+    phoneLabel: 'Country Code & Phone Number',
+    countryCodeLabel: 'Country Code',
+    phoneNumberPlaceholder: 'Phone number (Optional)',
+    optional: 'Optional',
+    required: 'Required',
+    submitButton: 'Complete Registration',
+    submitting: 'Registering...',
+    hasAccount: 'Already have an account?',
+    goToLogin: 'Sign In',
+    validation: {
+      emailRequired: 'Email is required.',
+      emailInvalid: 'Please enter a valid email format (e.g. abc@de.fg).',
+      pinRequired: 'PIN code is required.',
+      pinInvalid: 'PIN code must be 4 digits.',
+      pinMismatch: 'PIN codes do not match.',
+      birthDateRequired: 'Date of birth is required.',
+      birthDateInvalid: 'Date of birth must be 8 digits (e.g. 19950512).',
+      birthDateRange: 'Please enter a valid birth date (1900 ~ present).',
+      phoneInvalid: 'Phone number must contain only numbers.',
+    },
+  },
+
+  // Response/Scan Page
+  response: {
+    title: 'Authentication Completed',
+    subtitle: 'Hold the QR code up to the kiosk camera, or enter the 6-digit PIN on the kiosk screen.',
+    guideSectionTitle: 'Kiosk Authentication Guide',
+    guideQrTitle: 'Option 1. Scan QR Code',
+    guideQrDesc: 'Hold the QR code up to the kiosk camera.',
+    guidePinTitle: 'Option 2. Enter 6-digit PIN',
+    guidePinDesc: 'Enter the 6-digit code below on the kiosk screen.',
+    pinLabel: '6-digit PIN',
+    backToLogin: 'Back',
+    userInfo: 'Linked Account',
+    brightnessMarquee: '💡 If scanning fails, please increase screen brightness to maximum!',
+  },
+};
+

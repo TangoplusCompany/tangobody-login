@@ -1,0 +1,83 @@
+export const ko = {
+  // 공통
+  appTitle: 'Tangobody',
+  systemDetected: '시스템 감지',
+  language: '언어',
+  korean: '한국어',
+  english: 'English (그 외 국가)',
+  auto: '자동 감지 (크롬 설정)',
+  loading: '처리 중...',
+  copySuccess: '클립보드에 복사되었습니다.',
+  copyFailed: '복사에 실패했습니다.',
+  copy: '복사',
+
+  // 로그인 페이지
+  login: {
+    title: '환영합니다',
+    subtitle: 'Tangobody 계정에 로그인하세요',
+    emailLabel: '이메일 주소',
+    emailPlaceholder: '이메일 (abc@de.fg)',
+    pinLabel: 'PIN 번호 (4자리)',
+    pinPlaceholder: 'PIN 번호 (숫자 4자리)',
+    submitButton: '로그인',
+    submitting: '로그인 중...',
+    noAccount: '아직 계정이 없으신가요?',
+    goToSignUp: '회원가입',
+    validation: {
+      emailRequired: '이메일을 입력해주세요.',
+      emailInvalid: '이메일 형식을 확인해주세요. (예: abc@de.fg)',
+      pinRequired: 'PIN 번호를 입력해주세요.',
+      pinInvalid: 'PIN 번호는 4자리 숫자여야 합니다.',
+    },
+  },
+
+  // 회원가입 페이지
+  signUp: {
+    title: '회원가입',
+    subtitle: 'Tangobody와 함께 건강한 변화를 시작하세요',
+    emailLabel: '이메일',
+    emailPlaceholder: 'example@domain.com',
+    pinLabel: 'PIN 번호 (숫자 4자리)',
+    pinPlaceholder: '4자리 숫자 PIN 입력',
+    pinConfirmLabel: 'PIN 번호 확인',
+    pinConfirmPlaceholder: 'PIN 번호 다시 입력',
+    birthDateLabel: '생년월일 (숫자 8자리)',
+    birthDatePlaceholder: 'YYYYMMDD (예: 19950512)',
+    phoneLabel: '국가번호 및 휴대폰 번호',
+    countryCodeLabel: '국가번호',
+    phoneNumberPlaceholder: '01012345678 (선택사항)',
+    optional: '선택',
+    required: '필수',
+    submitButton: '회원가입 완료',
+    submitting: '가입 처리 중...',
+    hasAccount: '이미 계정이 있으신가요?',
+    goToLogin: '로그인하기',
+    validation: {
+      emailRequired: '이메일은 필수 입력 항목입니다.',
+      emailInvalid: '올바른 이메일 형식을 입력해주세요. (예: abc@de.fg)',
+      pinRequired: 'PIN 번호는 필수 입력 항목입니다.',
+      pinInvalid: 'PIN 번호는 숫자 4자리여야 합니다.',
+      pinMismatch: 'PIN 번호가 일치하지 않습니다.',
+      birthDateRequired: '생년월일은 필수 입력 항목입니다.',
+      birthDateInvalid: '생년월일은 8자리 숫자여야 합니다. (예: 19950512)',
+      birthDateRange: '유효한 생년월일을 입력해주세요. (1900년 ~ 현재)',
+      phoneInvalid: '휴대폰 번호는 숫자만 입력해주세요.',
+    },
+  },
+
+  // 응답/스캔 페이지
+  response: {
+    title: '인증 완료',
+    subtitle: 'QR 코드를 키오스크 카메라에 가져다 대거나, 혹은 키오스크 화면에 6자리 PIN을 입력하세요.',
+    guideSectionTitle: '키오스크 인증 안내',
+    guideQrTitle: '방법 1. QR 코드 스캔',
+    guideQrDesc: '키오스크 카메라에 QR 코드를 비춰주세요.',
+    guidePinTitle: '방법 2. 6자리 PIN 입력',
+    guidePinDesc: '키오스크 화면에 아래 6자리 숫자를 입력하세요.',
+    pinLabel: '6자리 PIN 번호',
+    backToLogin: '처음으로',
+    userInfo: '연결된 계정',
+    brightnessMarquee: '💡 스캔이 안 될 경우 화면 밝기를 최대로 올려주세요!',
+  },
+};
+
