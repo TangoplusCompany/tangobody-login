@@ -52,9 +52,7 @@ export const ResponsePage: React.FC = () => {
 
   // QR 코드에 담길 데이터
   const qrPayload = JSON.stringify({
-    user_uuid: currentData.user_uuid,
     pin: currentData.pin,
-    email: currentData.email,
   });
 
   return (
@@ -91,7 +89,7 @@ export const ResponsePage: React.FC = () => {
             title={t.response.backToLogin}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>{t.response.backToLogin}</span>
+            <span className='font-bold'>{t.response.backToLogin}</span>
           </button>
 
           <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#2C4FD0]/10 text-[#2C4FD0]">

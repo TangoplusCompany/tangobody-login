@@ -1,8 +1,5 @@
 export interface AuthResponse {
-  user_uuid: string; // 예: "3f8b8a92-2993-4a12-9c9e-56e87fbb0241"
   pin: string;       // 6자리 숫자, 예: "849201"
-  email: string;
-  createdAt: string;
 }
 
 export interface LoginParams {
@@ -18,19 +15,6 @@ export interface RegisterParams {
   phoneNumber?: string;
 }
 
-/**
- * 범용 고유 식별자(UUID v4) 생성 함수
- */
-function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 /**
  * 6자리 숫자 PIN 생성 함수 (100000 ~ 999999)
@@ -62,10 +46,7 @@ export const authApi = {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     return {
-      user_uuid: generateUUID(),
       pin: generate6DigitPin(),
-      email: params.email,
-      createdAt: new Date().toISOString(),
     };
   },
 
@@ -89,23 +70,17 @@ export const authApi = {
     await new Promise((resolve) => setTimeout(resolve, 600));
 
     return {
-      user_uuid: generateUUID(),
       pin: generate6DigitPin(),
-      email: params.email,
-      createdAt: new Date().toISOString(),
     };
   },
 
   /**
    * PIN 및 QR 재발급 API (시뮬레이션)
    */
-  async regeneratePin(userUuid: string, email: string): Promise<AuthResponse> {
+  async regeneratePin(): Promise<AuthResponse> {
     await new Promise((resolve) => setTimeout(resolve, 400));
     return {
-      user_uuid: userUuid || generateUUID(),
       pin: generate6DigitPin(),
-      email: email,
-      createdAt: new Date().toISOString(),
     };
   },
 };

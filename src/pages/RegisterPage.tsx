@@ -1,28 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Calendar, Phone, UserPlus, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Calendar, Phone, UserPlus, ArrowLeft, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../api/auth';
-
-interface CountryOption {
-  code: string;
-  label: string;
-  flag: string;
-}
-
-const COUNTRY_OPTIONS: CountryOption[] = [
-  { code: '+82', label: '대한민국 (+82)', flag: '🇰🇷' },
-  { code: '+1', label: 'USA / Canada (+1)', flag: '🇺🇸' },
-  { code: '+81', label: 'Japan (+81)', flag: '🇯🇵' },
-  { code: '+86', label: 'China (+86)', flag: '🇨🇳' },
-  { code: '+44', label: 'UK (+44)', flag: '🇬🇧' },
-  { code: '+49', label: 'Germany (+49)', flag: '🇩🇪' },
-  { code: '+33', label: 'France (+33)', flag: '🇫🇷' },
-  { code: '+84', label: 'Vietnam (+84)', flag: '🇻🇳' },
-  { code: '+65', label: 'Singapore (+65)', flag: '🇸🇬' },
-  { code: '+61', label: 'Australia (+61)', flag: '🇦🇺' },
-];
+import { CountryCodeModal } from '../components/CountryCodeModal';
+import { COUNTRIES } from '../data/countries';
+import type { Country } from '../data/countries';
 
 export const RegisterPage: React.FC = () => {
   const { t, language } = useLanguage();
@@ -33,7 +17,8 @@ export const RegisterPage: React.FC = () => {
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [countryCode, setCountryCode] = useState('+82');
+  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]); // 기본: South Korea (+82)
+  const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
   const [error, setError] = useState('');
@@ -103,7 +88,7 @@ export const RegisterPage: React.FC = () => {
 
     // 4. 국가번호_휴대폰번호 (선택)
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-    if (phoneNumber.trim() && cleanPhone.length < 7) {
+    if (phoneNumber.trim() && cleanPhone.length < 5) {
       setError(t.signUp.validation.phoneInvalid);
       return;
     }
@@ -114,8 +99,8 @@ export const RegisterPage: React.FC = () => {
         email: email.trim(),
         pin: pin.trim(),
         birthDate: birthDate.trim(),
-        countryCode: phoneNumber.trim() ? countryCode : undefined,
-        phoneNumber: phoneNumber.trim() ? `${countryCode}_${cleanPhone}` : undefined,
+        countryCode: phoneNumber.trim() ? selectedCountry.dialCode : undefined,
+        phoneNumber: phoneNumber.trim() ? `${selectedCountry.dialCode}_${cleanPhone}` : undefined,
       });
 
       setAuthData(res);
@@ -129,7 +114,7 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-4 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 transition-all">
+    <div className="w-full max-w-lg mx-auto p-6 sm:p-8 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 transition-all">
       <div className="text-center mb-6">
         <div className="bg-[#2C4FD0]/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#2C4FD0] shadow-xs">
           <UserPlus className="w-7 h-7" />
@@ -138,7 +123,7 @@ export const RegisterPage: React.FC = () => {
         <p className="text-sm text-gray-500 mt-1">{t.signUp.subtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* 이메일 (필수) */}
         <div>
           <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
@@ -242,21 +227,26 @@ export const RegisterPage: React.FC = () => {
             <span className="text-gray-400 text-[11px]">({t.signUp.optional})</span>
           </label>
           <div className="flex gap-2">
-            <div className="w-1/3 min-w-[120px]">
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
+            {/* 국가번호 모달 트리거 버튼 */}
+            <div className="w-2/5 min-w-[125px]">
+              <button
+                type="button"
+                onClick={() => setIsCountryModalOpen(true)}
                 disabled={isLoading}
-                className="w-full py-3 px-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all cursor-pointer"
+                className="w-full py-3 px-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all flex items-center justify-between gap-1.5 cursor-pointer hover:bg-gray-100/70"
+                title="Select country code"
               >
-                {COUNTRY_OPTIONS.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.code}
-                  </option>
-                ))}
-              </select>
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="text-base select-none">{selectedCountry.flag}</span>
+                  <span className="font-semibold text-gray-900 font-mono text-xs sm:text-sm">
+                    {selectedCountry.dialCode}
+                  </span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+              </button>
             </div>
 
+            {/* 휴대폰 번호 입력창 */}
             <div className="relative flex-1">
               <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <input
@@ -275,8 +265,8 @@ export const RegisterPage: React.FC = () => {
           </div>
           <p className="text-[11px] text-gray-400 mt-1 pl-1">
             {language === 'ko'
-              ? '저장 포맷: [국가번호]_[휴대폰번호] (예: +82_01012345678)'
-              : 'Stored format: [CountryCode]_[Phone] (e.g. +82_01012345678)'}
+              ? `저장 포맷: [국가번호]_[휴대폰번호] (예: ${selectedCountry.dialCode}_01012345678)`
+              : `Stored format: [CountryCode]_[Phone] (e.g. ${selectedCountry.dialCode}_01012345678)`}
           </p>
         </div>
 
@@ -315,6 +305,14 @@ export const RegisterPage: React.FC = () => {
           <span>{t.signUp.goToLogin}</span>
         </Link>
       </div>
+
+      {/* 국가번호 검색 모달 */}
+      <CountryCodeModal
+        isOpen={isCountryModalOpen}
+        selectedDialCode={selectedCountry.dialCode}
+        onSelect={(country) => setSelectedCountry(country)}
+        onClose={() => setIsCountryModalOpen(false)}
+      />
     </div>
   );
 };
