@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Mail, Lock, LogIn, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock,ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
-import { authApi } from '../api/auth';
+import { ApiError, authApi } from '../api/auth';
 
 export const LoginPage: React.FC = () => {
   const { t } = useLanguage();
@@ -46,13 +46,20 @@ export const LoginPage: React.FC = () => {
       setIsLoading(true);
       const res = await authApi.login({
         email: email.trim(),
-        pin: pin.trim(),
+        pin_password: pin.trim(),
       });
       setAuthData(res);
       navigate('/response');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError(t.login.validation.invalidCredentials);
+        } else {
+          setError(t.login.validation.serverError);
+        }
+      } else {
+        setError(t.login.validation.serverError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -61,9 +68,6 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="w-full max-w-md mx-auto p-4  bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 transition-all">
       <div className="text-center mb-8">
-        <div className="bg-[#2C4FD0]/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#2C4FD0] shadow-xs">
-          <LogIn className="w-7 h-7" />
-        </div>
         <h2 className="text-2xl font-bold text-gray-900">{t.login.title}</h2>
         <p className="text-sm text-gray-500 mt-1">{t.login.subtitle}</p>
       </div>
@@ -124,7 +128,7 @@ export const LoginPage: React.FC = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3.5 px-4 bg-[#2C4FD0] hover:bg-[#223FA8] active:bg-[#1B3388] disabled:bg-[#2C4FD0]/40 text-white font-semibold rounded-xl shadow-md shadow-[#2C4FD0]/25 transition-all flex items-center justify-center gap-2 text-sm mt-2"
+          className="w-full py-3.5 px-4 bg-brand-blue hover:bg-brand-blue-hover active:bg-brand-blue-dark disabled:bg-brand-blue/40 text-white font-semibold rounded-xl shadow-md shadow-brand-blue/25 transition-all flex items-center justify-center gap-2 text-sm mt-2"
         >
           {isLoading ? (
             <>
@@ -141,12 +145,12 @@ export const LoginPage: React.FC = () => {
       </form>
 
       {/* 회원가입 링크 */}
-      <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-        <p className="text-xs sm:text-sm text-gray-500">
+      <div className="mt-4 pt-2 border-t border-gray-100 text-center">
+        <p className="text-sm sm:text-sm text-gray-500">
           {t.login.noAccount}{' '}
           <Link
             to="/signup"
-            className="font-semibold text-[#2C4FD0] hover:underline inline-flex items-center gap-1 ml-1"
+            className="font-semibold text-[#2C4FD0] hover:underline inline-flex items-center gap-1 ml-1 py-4 px-2"
           >
             {t.login.goToSignUp}
           </Link>

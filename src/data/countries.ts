@@ -104,3 +104,28 @@ export const COUNTRIES: Country[] = [
   { name: 'Venezuela', code: 'VE', dialCode: '+58', flag: '🇻🇪' },
 ];
 
+/**
+ * 선택된 언어(ko, en, az, ru, es 등)에 대응하는 기본 국가를 반환합니다.
+ * - en: United States (+1)
+ * - ko: South Korea (+82)
+ * - az: Azerbaijan (+994)
+ * - ru: Russia (+7)
+ * - es: Spain (+34)
+ */
+export function getDefaultCountryByLanguage(lang: string): Country {
+  switch (lang) {
+    case 'en':
+      return COUNTRIES.find((c) => c.code === 'US') || COUNTRIES[0];
+    case 'az':
+      return COUNTRIES.find((c) => c.code === 'AZ') || COUNTRIES[0];
+    case 'ru':
+      return COUNTRIES.find((c) => c.code === 'RU') || COUNTRIES[0];
+    case 'es':
+      return COUNTRIES.find((c) => c.code === 'ES') || COUNTRIES[0];
+    case 'ko':
+    default:
+      return COUNTRIES.find((c) => c.code === 'KR') || COUNTRIES[0];
+  }
+}
+
+

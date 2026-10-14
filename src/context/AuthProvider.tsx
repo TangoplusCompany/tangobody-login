@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { AuthResponse } from '../api/auth';
 import { AuthContext } from './AuthContext';
 
-const STORAGE_KEY_AUTH = 'tangobody_auth_result';
+const STORAGE_KEY_AUTH = 'tangobody_login_auth_result';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authData, setAuthDataState] = useState<AuthResponse | null>(() => {

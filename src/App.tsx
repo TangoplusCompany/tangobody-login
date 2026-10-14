@@ -16,7 +16,7 @@ export default function App() {
             <Header />
 
             {/* 페이지 메인 콘텐츠 */}
-            <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
+            <main className="flex-1 flex items-center justify-center px-4 pt-4 pb-8">
               <Routes>
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<LoginPage />} />

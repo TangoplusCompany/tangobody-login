@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Calendar, Phone, UserPlus, ArrowLeft, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { Mail, Lock, Calendar, Phone, UserPlus, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
-import { authApi } from '../api/auth';
+import { authApi, RegisterApiError, ApiError } from '../api/auth';
 import { CountryCodeModal } from '../components/CountryCodeModal';
-import { COUNTRIES } from '../data/countries';
+import { getDefaultCountryByLanguage } from '../data/countries';
 import type { Country } from '../data/countries';
 
 export const RegisterPage: React.FC = () => {
@@ -16,30 +16,45 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]); // 기본: South Korea (+82)
+  const [gender, setGender] = useState<'남성' | '여성' | ''>('');
+
+  // 현재 선택된 언어에 맞춰 기본 국가번호 초기화 (영어 -> +1 미국 등)
+  const [selectedCountry, setSelectedCountry] = useState<Country>(() =>
+    getDefaultCountryByLanguage(language)
+  );
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false);
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 생년월일 8자리 유효성 검증
-  const isValidBirthDate = (dateStr: string): boolean => {
-    if (!/^\d{8}$/.test(dateStr)) return false;
-    const year = parseInt(dateStr.slice(0, 4), 10);
-    const month = parseInt(dateStr.slice(4, 6), 10);
-    const day = parseInt(dateStr.slice(6, 8), 10);
+  const [prevLanguage, setPrevLanguage] = useState(language);
 
-    const currentYear = new Date().getFullYear();
-    if (year < 1900 || year > currentYear) return false;
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
+  // 3. useEffect 대신 본문에서 바로 갱신
+  if (prevLanguage !== language) {
+    setPrevLanguage(language);
+    setSelectedCountry(getDefaultCountryByLanguage(language));
+  }
+  
 
-    // 실제 해당 월의 일수 확인
-    const daysInMonth = new Date(year, month, 0).getDate();
-    return day <= daysInMonth;
-  };
+  // 모든 필수 항목(이메일, PIN 4자리, PIN 확인 일치, 이름, 성, 생년월일, 성별, 개인정보 동의) 유효성 충족 여부
+  const isFormValid = Boolean(
+    email.trim() &&
+    /^[^@\s]{3,}@[^@\s]{2,}\.[^@\s]{2,}$/.test(email.trim()) &&
+    /^\d{4}$/.test(pin) &&
+    pin === pinConfirm &&
+    firstName.trim() &&
+    lastName.trim() &&
+    birthDate &&
+    /^\d{4}-\d{2}-\d{2}$/.test(birthDate) &&
+    (gender === '남성' || gender === '여성') &&
+    agreedPrivacy &&
+    (!phoneNumber.trim() || phoneNumber.replace(/[^0-9]/g, '').length >= 5)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,42 +87,72 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    // 3. 생년월일 (숫자 8자리, 필수)
+    // 3. 이름 (이름 & 성 2칸, 필수)
+    if (!firstName.trim()) {
+      setError(t.signUp.validation.firstNameRequired);
+      return;
+    }
+    if (!lastName.trim()) {
+      setError(t.signUp.validation.lastNameRequired);
+      return;
+    }
+
+    // 4. 생년월일 (달력 선택, YYYY-MM-DD 형식, 필수)
     if (!birthDate.trim()) {
       setError(t.signUp.validation.birthDateRequired);
       return;
     }
-    if (!/^\d{8}$/.test(birthDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
       setError(t.signUp.validation.birthDateInvalid);
       return;
     }
-    if (!isValidBirthDate(birthDate)) {
-      setError(t.signUp.validation.birthDateRange);
+
+    // 5. 성별 (남성/여성, 필수)
+    if (!gender) {
+      setError(t.signUp.validation.genderRequired);
       return;
     }
 
-    // 4. 국가번호_휴대폰번호 (선택)
+    // 6. 국가번호 & 휴대폰번호 (선택)
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
     if (phoneNumber.trim() && cleanPhone.length < 5) {
       setError(t.signUp.validation.phoneInvalid);
       return;
     }
 
+    // 7. 개인정보 수집 및 이용 동의 (필수)
+    if (!agreedPrivacy) {
+      setError(t.signUp.validation.privacyRequired);
+      return;
+    }
+
     try {
       setIsLoading(true);
+
       const res = await authApi.register({
         email: email.trim(),
-        pin: pin.trim(),
-        birthDate: birthDate.trim(),
-        countryCode: phoneNumber.trim() ? selectedCountry.dialCode : undefined,
-        phoneNumber: phoneNumber.trim() ? `${selectedCountry.dialCode}_${cleanPhone}` : undefined,
+        pin_password: pin.trim(),
+        birthday: birthDate.trim(),
+        gender: gender as '남성' | '여성',
+        mobile: phoneNumber.trim() ? `${selectedCountry.dialCode}${cleanPhone}` : undefined,
+        first_name : firstName.trim(),
+        last_name :lastName.trim()
       });
 
       setAuthData(res);
       navigate('/response');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
-      setError(message);
+      if (err instanceof RegisterApiError || err instanceof ApiError) {
+        if (err.status === 409) {
+          setError(t.signUp.validation.emailExists);
+        } else if (err.status === 400) {
+          setError(t.signUp.validation.invalidInput);
+        } else {
+          setError(t.signUp.validation.serverError);
+        }
+      } else {
+        setError(t.signUp.validation.serverError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +161,7 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="w-full max-w-lg mx-auto p-6 sm:p-8 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 transition-all">
       <div className="text-center mb-6">
-        <div className="bg-[#2C4FD0]/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#2C4FD0] shadow-xs">
+        <div className="bg-brand-blue/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-blue shadow-xs">
           <UserPlus className="w-7 h-7" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900">{t.signUp.title}</h2>
@@ -124,7 +169,7 @@ export const RegisterPage: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* 이메일 (필수) */}
+        {/* 1. 이메일 (필수) */}
         <div>
           <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
             <span>{t.signUp.emailLabel}</span>
@@ -138,13 +183,13 @@ export const RegisterPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all text-sm"
               autoComplete="email"
             />
           </div>
         </div>
 
-        {/* PIN 번호 & 확인 (필수 4자리) */}
+        {/* 2. PIN 번호 & 확인 (필수 4자리) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
@@ -164,7 +209,7 @@ export const RegisterPage: React.FC = () => {
                   if (val.length <= 4) setPin(val);
                 }}
                 disabled={isLoading}
-                className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all tracking-widest font-mono text-sm"
+                className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all tracking-widest font-mono text-sm"
               />
             </div>
           </div>
@@ -187,13 +232,82 @@ export const RegisterPage: React.FC = () => {
                   if (val.length <= 4) setPinConfirm(val);
                 }}
                 disabled={isLoading}
-                className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all tracking-widest font-mono text-sm"
+                className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none transition-all tracking-widest font-mono text-sm ${
+                  pinConfirm.length > 0
+                    ? pin === pinConfirm
+                      ? 'border-[#00E676] focus:ring-2 focus:ring-[#00E676]/40 focus:bg-white'
+                      : 'border-red-400 focus:ring-2 focus:ring-red-400/40 focus:bg-white'
+                    : 'border-gray-200 focus:ring-2 focus:ring-brand-blue focus:bg-white'
+                }`}
+              />
+            </div>
+            {/* 실시간 PIN 일치/불일치 상태 안내 (네온초록색 - 빨간색) */}
+            {pinConfirm.length > 0 && (
+              <p
+                className={`text-[11px] mt-1.5 pl-1 flex items-center gap-1 font-semibold transition-all duration-150 ${
+                  pin === pinConfirm
+                    ? 'text-[#00C853] dark:text-[#00E676]'
+                    : 'text-red-500'
+                }`}
+              >
+                {pin === pinConfirm ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                    <span>{t.signUp.pinMatch}</span>
+                  </>
+                ) : (
+                  <>
+                    <X className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                    <span>{t.signUp.pinMismatch}</span>
+                  </>
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* 3. 이름 (이름 & 성 2칸 분리, 필수) */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
+              <span>{t.signUp.firstNameLabel}</span>
+              <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <input
+                type="text"
+                placeholder={t.signUp.firstNamePlaceholder}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={isLoading}
+                className="w-full pl-10 pr-3 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all text-sm"
+                autoComplete="given-name"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
+              <span>{t.signUp.lastNameLabel}</span>
+              <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <input
+                type="text"
+                placeholder={t.signUp.lastNamePlaceholder}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={isLoading}
+                className="w-full pl-10 pr-3 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all text-sm"
+                autoComplete="family-name"
               />
             </div>
           </div>
         </div>
 
-        {/* 생년월일 (숫자 8자리, 필수) */}
+        {/* 4. 생년월일 (달력 선택, YYYY-MM-DD 형식, 필수) */}
         <div>
           <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
             <span>{t.signUp.birthDateLabel}</span>
@@ -202,25 +316,60 @@ export const RegisterPage: React.FC = () => {
           <div className="relative">
             <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
             <input
-              type="text"
-              inputMode="numeric"
-              maxLength={8}
-              placeholder={t.signUp.birthDatePlaceholder}
+              type="date"
+              lang={language}
               value={birthDate}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^0-9]/g, '');
-                if (val.length <= 8) setBirthDate(val);
+              onChange={(e) => setBirthDate(e.target.value)}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker?.();
+                } catch {
+                  // Ignore if unsupported
+                }
               }}
+              min="1900-01-01"
+              max={new Date().toISOString().split('T')[0]}
               disabled={isLoading}
-              className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all font-mono text-sm tracking-wider"
+              className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all font-mono text-sm tracking-wide cursor-pointer"
             />
           </div>
-          <p className="text-[11px] text-gray-400 mt-1 pl-1">
-            {language === 'ko' ? '예시: 19950512 (8자리 숫자)' : 'Format: YYYYMMDD (8 digits)'}
-          </p>
         </div>
 
-        {/* 국가번호_휴대폰번호 (선택) */}
+        {/* 5. 성별 (남성/여성 토글 버튼, 필수) */}
+        <div>
+          <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
+            <span>{t.signUp.genderLabel}</span>
+            <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setGender('남성')}
+              disabled={isLoading}
+              className={`py-3 px-4 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                gender === '남성'
+                  ? 'bg-brand-blue text-white border-brand-blue shadow-sm shadow-brand-blue/30 font-bold'
+                  : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <span>{t.signUp.genderMale}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender('여성')}
+              disabled={isLoading}
+              className={`py-3 px-4 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                gender === '여성'
+                  ? 'bg-brand-blue text-white border-brand-blue shadow-sm shadow-brand-blue/30 font-bold'
+                  : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              <span>{t.signUp.genderFemale}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 6. 국가번호 & 휴대폰번호 (선택) */}
         <div>
           <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
             <span>{t.signUp.phoneLabel}</span>
@@ -228,12 +377,12 @@ export const RegisterPage: React.FC = () => {
           </label>
           <div className="flex gap-2">
             {/* 국가번호 모달 트리거 버튼 */}
-            <div className="w-2/5 min-w-[125px]">
+            <div className="w-2/5 min-w-31.25">
               <button
                 type="button"
                 onClick={() => setIsCountryModalOpen(true)}
                 disabled={isLoading}
-                className="w-full py-3 px-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all flex items-center justify-between gap-1.5 cursor-pointer hover:bg-gray-100/70"
+                className="w-full py-3 px-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all flex items-center justify-between gap-1.5 cursor-pointer hover:bg-gray-100/70"
                 title="Select country code"
               >
                 <div className="flex items-center gap-1.5 truncate">
@@ -259,15 +408,26 @@ export const RegisterPage: React.FC = () => {
                   setPhoneNumber(val);
                 }}
                 disabled={isLoading}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2C4FD0] focus:bg-white transition-all text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all text-sm"
               />
             </div>
           </div>
-          <p className="text-[11px] text-gray-400 mt-1 pl-1">
-            {language === 'ko'
-              ? `저장 포맷: [국가번호]_[휴대폰번호] (예: ${selectedCountry.dialCode}_01012345678)`
-              : `Stored format: [CountryCode]_[Phone] (e.g. ${selectedCountry.dialCode}_01012345678)`}
-          </p>
+        </div>
+
+        {/* 7. 개인정보 수집 및 이용 동의 (필수 체크 항목) */}
+        <div className="pt-1">
+          <label className="flex items-start gap-2.5 p-3 bg-gray-50/90 hover:bg-gray-100/80 border border-gray-200 rounded-xl cursor-pointer transition-colors select-none">
+            <input
+              type="checkbox"
+              checked={agreedPrivacy}
+              onChange={(e) => setAgreedPrivacy(e.target.checked)}
+              disabled={isLoading}
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue shrink-0 cursor-pointer accent-brand-blue"
+            />
+            <span className="text-xs text-gray-700 leading-relaxed font-medium">
+              {t.signUp.privacyConsent}
+            </span>
+          </label>
         </div>
 
         {/* 에러 메시지 */}
@@ -278,11 +438,15 @@ export const RegisterPage: React.FC = () => {
           </div>
         )}
 
-        {/* 제출 버튼 */}
+        {/* 회원가입 제출 버튼 */}
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full py-3.5 px-4 bg-[#2C4FD0] hover:bg-[#223FA8] active:bg-[#1B3388] disabled:bg-[#2C4FD0]/40 text-white font-semibold rounded-xl shadow-md shadow-[#2C4FD0]/25 transition-all flex items-center justify-center gap-2 text-sm mt-3"
+          disabled={!isFormValid || isLoading}
+          className={`w-full py-3.5 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 mt-3 select-none ${
+            isFormValid && !isLoading
+              ? 'bg-brand-blue hover:bg-brand-blue-hover active:bg-brand-blue-dark text-white shadow-md shadow-brand-blue/25 cursor-pointer'
+              : 'bg-slate-200 text-slate-400 border border-slate-200/80 cursor-not-allowed shadow-none'
+          }`}
         >
           {isLoading ? (
             <>
@@ -299,7 +463,7 @@ export const RegisterPage: React.FC = () => {
       <div className="mt-6 pt-5 border-t border-gray-100 text-center">
         <Link
           to="/login"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-[#2C4FD0] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-brand-blue transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>{t.signUp.goToLogin}</span>

@@ -13,9 +13,21 @@ function detectBrowserLanguage(): { detected: Language; raw: string } {
   }
 
   const primary = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
-  const isKorean = primary.toLowerCase().startsWith('ko');
+  const lower = primary.toLowerCase();
+  let detected: Language = 'en';
+
+  if (lower.startsWith('ko')) {
+    detected = 'ko';
+  } else if (lower.startsWith('az')) {
+    detected = 'az';
+  } else if (lower.startsWith('es')) {
+    detected = 'es';
+  } else if (lower.startsWith('ru')) {
+    detected = 'ru';
+  }
+
   return {
-    detected: isKorean ? 'ko' : 'en',
+    detected,
     raw: primary,
   };
 }
@@ -28,7 +40,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [manualLang, setManualLang] = useState<Language>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_LANG) as Language | null;
-    return saved === 'ko' || saved === 'en' ? saved : 'ko';
+    return saved && (['ko', 'en', 'az', 'es', 'ru'] as Language[]).includes(saved) ? saved : 'ko';
   });
 
   // 브라우저 언어 변경 감지 이벤트 (Chrome 설정 등에서 언어를 바꿨을 때 실시간 반영)
@@ -45,6 +57,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const currentLanguage: Language = mode === 'manual' ? manualLang : systemInfo.detected;
+
+  // HTML 태그의 lang 속성을 현재 언어와 동기화 (브라우저 접근성 및 네이티브 입력 폼 힌트 제공)
+  useEffect(() => {
+    document.documentElement.lang = currentLanguage;
+  }, [currentLanguage]);
 
   const handleSetLanguage = (lang: Language) => {
     setMode('manual');
