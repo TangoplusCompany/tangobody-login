@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Calendar, Phone, UserPlus, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X } from 'lucide-react';
+import { Mail, Lock, Calendar, Phone, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { authApi, RegisterApiError, ApiError } from '../api/auth';
+import type { RegisterRequest } from '../api/auth';
 import { CountryCodeModal } from '../components/CountryCodeModal';
 import { getDefaultCountryByLanguage } from '../data/countries';
 import type { Country } from '../data/countries';
@@ -126,20 +127,29 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
+    const hasPhone = Boolean(phoneNumber.trim());
+
     try {
       setIsLoading(true);
 
-      const res = await authApi.register({
+      const registerPayload: RegisterRequest = {
         email: email.trim(),
         pin_password: pin.trim(),
         birthday: birthDate.trim(),
         gender: gender as '남성' | '여성',
-        mobile: phoneNumber.trim() ? cleanPhone : undefined,
-        country_iso: selectedCountry.code,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-      });
+        ...(hasPhone
+          ? {
+              mobile: cleanPhone,
+              country_iso: selectedCountry.code,
+            }
+          : {}),
+      };
 
+      const res = await authApi.register(registerPayload);
+
+      sessionStorage.setItem('tango_last_credentials', JSON.stringify({ email: email.trim(), pin_password: pin.trim() }));
       setAuthData(res);
       navigate('/response');
     } catch (err: unknown) {
@@ -162,10 +172,16 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="w-full max-w-lg mx-auto p-6 sm:p-8 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 transition-all">
       <div className="text-center mb-6">
-        <div className="bg-brand-blue/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-brand-blue shadow-xs">
-          <UserPlus className="w-7 h-7" />
+        <div className="inline-flex flex-col items-center justify-center mb-2">
+          <img
+            src="/logo_color.png"
+            alt="Tangobody Logo"
+            className="w-16 h-16 object-contain"
+          />
+          <span className="text-2xl font-bold tracking-tight text-gray-900">
+            Tangobody
+          </span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">{t.signUp.title}</h2>
         <p className="text-sm text-gray-500 mt-1">{t.signUp.subtitle}</p>
       </div>
 

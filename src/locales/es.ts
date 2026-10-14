@@ -99,6 +99,12 @@ export const es = {
     backToLogin: 'Inicio',
     userInfo: 'Cuenta vinculada',
     brightnessMarquee: '💡 ¡Si falla el escaneo, sube el brillo de la pantalla al máximo!',
+    timeRemaining: 'Tiempo restante',
+    expired: 'Expirado',
+    expiredDesc: 'El tiempo de validez del PIN ha expirado.',
+    reissue: 'Reemitir',
+    reissuing: 'Reemitiendo...',
+    reissueFailed: 'Error al reemitir el PIN. Inténtelo de nuevo.',
   },
 };
 

@@ -99,5 +99,11 @@ export const az = {
     backToLogin: 'Əvvələ',
     userInfo: 'Bağlanmış hesab',
     brightnessMarquee: '💡 Skan alınmırsa, ekran parlaqlığını maksimuma qaldırın!',
+    timeRemaining: 'Qalan vaxt',
+    expired: 'Vaxtı bitib',
+    expiredDesc: 'PIN kodun etibarlılıq müddəti bitdi.',
+    reissue: 'Yenidən al',
+    reissuing: 'Yenilənir...',
+    reissueFailed: 'Yeni PIN almaq alınmadı. Yenidən cəhd edin.',
   },
 };

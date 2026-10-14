@@ -17,7 +17,7 @@ export const ko = {
   // 로그인 페이지
   login: {
     title: '환영합니다',
-    subtitle: 'Tangobody 계정에 로그인하세요',
+    subtitle: '로그인을 통해 쉽게 검사를 준비하세요',
     emailLabel: '이메일 주소',
     emailPlaceholder: '이메일 (example@domain.com)',
     pinLabel: 'PIN 번호 (4자리)',
@@ -39,7 +39,7 @@ export const ko = {
   // 회원가입 페이지
   signUp: {
     title: '회원가입',
-    subtitle: 'Tangobody로 건강한 변화를 시작하세요',
+    subtitle: '회원가입을 통해 건강한 변화를 시작하세요',
     emailLabel: '이메일',
     emailPlaceholder: 'example@domain.com',
     pinLabel: 'PIN 번호 (숫자 4자리)',
@@ -99,6 +99,12 @@ export const ko = {
     backToLogin: '처음으로',
     userInfo: '연결된 계정',
     brightnessMarquee: '💡 스캔이 안 될 경우 화면 밝기를 최대로 올려주세요!',
+    timeRemaining: '유효시간',
+    expired: '유효시간 만료',
+    expiredDesc: 'PIN 번호 유효시간이 만료되었습니다.',
+    reissue: '새로 발급',
+    reissuing: '발급 중...',
+    reissueFailed: 'PIN 재발급에 실패했습니다. 다시 시도해주세요.',
   },
 };
 

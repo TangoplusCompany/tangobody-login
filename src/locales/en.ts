@@ -99,6 +99,12 @@ export const en = {
     backToLogin: 'Back',
     userInfo: 'Linked Account',
     brightnessMarquee: '💡 If scanning fails, please increase screen brightness to maximum!',
+    timeRemaining: 'Time Remaining',
+    expired: 'Expired',
+    expiredDesc: 'The PIN has expired.',
+    reissue: 'Re-issue',
+    reissuing: 'Re-issuing...',
+    reissueFailed: 'Failed to re-issue PIN. Please try again.',
   },
 };
 

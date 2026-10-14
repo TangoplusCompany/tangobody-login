@@ -63,10 +63,7 @@ export interface RegisterRequest {
  */
 export interface AuthResponse {
   six_digit_code: string;        // 키오스크/응답 화면에 크게 보여줄 6자리 PIN 번호
-  user_sn: string; 
-  user_uuid: string;   
-  pin?: string;                  // 하위 호환성을 위해 six_digit_code 복사
-  email?: string;
+  reg_date: string;              // "2024-09-04 14:11:15"
 }
 
 /**
@@ -141,6 +138,15 @@ function generateDummy6DigitPin(): string {
 }
 
 /**
+ * 현재 시각을 "YYYY-MM-DD HH:mm:ss" 형식으로 반환 (더미 및 기본값)
+ */
+export function formatNow(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/**
  * 중첩 배열(string[][] | string[]) 형태의 에러 메시지를 1차원 string[] 배열로 정규화
  */
 function normalizeServerMessages(rawMessage: unknown): string[] {
@@ -161,27 +167,7 @@ function normalizeServerMessages(rawMessage: unknown): string[] {
  * [API 1] 로그인 요청 (POST)
  */
 export async function loginApi(params: LoginRequest): Promise<AuthResponse> {
-  // 1) 더미(Mock) 모드일 경우: 가상 네트워크 지연 후 더미 응답 반환
-  if (API_CONFIG.USE_MOCK) {
-    console.log('[Mock API] 로그인 요청 파라미터:', params);
-    await new Promise((resolve) => setTimeout(resolve, 500)); // 500ms 지연 시뮬레이션
-
-    if (params.email === 'error401@test.com' || params.pin_password === '0000') {
-      throw new ApiError(401, 'Wrong email or password', ['Wrong email or password']);
-    }
-    if (params.email === 'error500@test.com') {
-      throw new ApiError(500, 'Server Error On Kiosk Login', ['Server Error On Kiosk Login']);
-    }
-
-    const dummyCode = generateDummy6DigitPin();
-    return {
-      six_digit_code: dummyCode,
-      pin: dummyCode,
-      user_sn: '1',
-      user_uuid: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-      email: params.email,
-    };
-  }
+  
 
   // 2) 실제 서버 통신 모드: HTTP POST fetch 호출
   const requestBody = API_CONFIG.ENABLE_ENCRYPTION
@@ -234,14 +220,12 @@ export async function loginApi(params: LoginRequest): Promise<AuthResponse> {
     ? responseData.data[0] || responseData
     : responseData?.data || responseData;
 
-  const sixDigitCode = String(rawItem?.six_digit_code || rawItem?.pin || '');
+  const sixDigitCode = String(rawItem?.six_digit_code || '');
+  const regDate = String(rawItem?.reg_date || formatNow());
 
   return {
     six_digit_code: sixDigitCode,
-    pin: sixDigitCode,
-    user_sn: String(rawItem?.user_sn ?? ''),
-    user_uuid: String(rawItem?.user_uuid ?? ''),
-    email: params.email,
+    reg_date: regDate,
   };
 }
 
@@ -272,17 +256,21 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
     const dummyCode = generateDummy6DigitPin();
     return {
       six_digit_code: dummyCode,
-      pin: dummyCode,
-      user_sn: '1',
-      user_uuid: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-      email: params.email,
+      reg_date: formatNow(),
     };
   }
 
   // 2) 실제 서버 통신 모드: HTTP POST fetch 호출
+  // mobile이 없을 경우 mobile과 country_iso 필드를 함께 제외하여 전송
+  const sanitizedParams: Record<string, unknown> = { ...params };
+  if (!sanitizedParams.mobile) {
+    delete sanitizedParams.mobile;
+    delete sanitizedParams.country_iso;
+  }
+
   const requestBody = API_CONFIG.ENABLE_ENCRYPTION
-    ? { encryptedData: encryptPayload(params) }
-    : params;
+    ? { encryptedData: encryptPayload(sanitizedParams) }
+    : sanitizedParams;
 
   const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REGISTER}`;
 
@@ -330,14 +318,12 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
     ? responseData.data[0] || responseData
     : responseData?.data || responseData;
 
-  const sixDigitCode = String(rawItem?.six_digit_code || rawItem?.pin || '');
+  const sixDigitCode = String(rawItem?.six_digit_code || '');
+  const regDate = String(rawItem?.reg_date || formatNow());
 
   return {
     six_digit_code: sixDigitCode,
-    pin: sixDigitCode,
-    user_sn: String(rawItem?.user_sn ?? ''),
-    user_uuid: String(rawItem?.user_uuid ?? ''),
-    email: params.email,
+    reg_date: regDate,
   };
 }
 

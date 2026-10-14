@@ -48,6 +48,7 @@ export const LoginPage: React.FC = () => {
         email: email.trim(),
         pin_password: pin.trim(),
       });
+      sessionStorage.setItem('tango_last_credentials', JSON.stringify({ email: email.trim(), pin_password: pin.trim() }));
       setAuthData(res);
       navigate('/response');
     } catch (err: unknown) {
@@ -68,7 +69,16 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="w-full max-w-md mx-auto p-4  bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 transition-all">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">{t.login.title}</h2>
+        <div className="inline-flex flex-col items-center justify-center mb-2">
+          <img
+            src="/logo_color.png"
+            alt="Tangobody Logo"
+            className="w-12 h-12 object-contain"
+          />
+          <span className="text-2xl font-bold tracking-tight text-gray-900">
+            Tangobody
+          </span>
+        </div>
         <p className="text-sm text-gray-500 mt-1">{t.login.subtitle}</p>
       </div>
 

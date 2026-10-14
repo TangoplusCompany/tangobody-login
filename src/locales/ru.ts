@@ -99,6 +99,12 @@ export const ru = {
     backToLogin: 'В начало',
     userInfo: 'Привязанный аккаунт',
     brightnessMarquee: '💡 Если сканирование не удается, увеличьте яркость экрана до максимума!',
+    timeRemaining: 'Осталось времени',
+    expired: 'Срок действия истек',
+    expiredDesc: 'Срок действия PIN-кода истек.',
+    reissue: 'Перевыпустить',
+    reissuing: 'Выпуск...',
+    reissueFailed: 'Не удалось перевыпустить PIN. Повторите попытку.',
   },
 };
 
