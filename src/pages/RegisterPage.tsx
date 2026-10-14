@@ -134,9 +134,10 @@ export const RegisterPage: React.FC = () => {
         pin_password: pin.trim(),
         birthday: birthDate.trim(),
         gender: gender as '남성' | '여성',
-        mobile: phoneNumber.trim() ? `${selectedCountry.dialCode}${cleanPhone}` : undefined,
-        first_name : firstName.trim(),
-        last_name :lastName.trim()
+        mobile: phoneNumber.trim() ? cleanPhone : undefined,
+        country_iso: selectedCountry.code,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
       });
 
       setAuthData(res);

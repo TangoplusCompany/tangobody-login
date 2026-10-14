@@ -52,8 +52,9 @@ export interface RegisterRequest {
   birthday: string;    
   gender: '남성' | '여성'; 
   mobile?: string;
-  first_name : string;
-  last_name :string;
+  country_iso?: string; // 국가 식별 코드 (예: KR, US, AZ 등 2글자)
+  first_name: string;
+  last_name: string;
 }
 
 /** 
