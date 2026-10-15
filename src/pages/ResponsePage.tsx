@@ -5,34 +5,59 @@ import { ArrowLeft, Clock, RotateCcw, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { PinDisplay } from '../components/PinDisplay';
-import { authApi, ApiError, formatNow } from '../api/auth';
+import { authApi, ApiError, formatNow, formatEndDate } from '../api/auth';
 import type { AuthResponse } from '../api/auth';
 
 /**
- * reg_date ("YYYY-MM-DD HH:mm:ss") 문자열을 받아 남은 유효시간(초)을 계산합니다.
- * 백엔드 개발/테스트용 정적 날짜(예: 과거 24시간 이상 차이)이거나 시계 차이가 큰 경우,
- * 기본 3분(180초)으로 안전하게 초기화합니다.
+ * "YYYY-MM-DD HH:mm:ss" 또는 ISO 날짜 문자열을 밀리초(ms) 단위 타임스탬프로 변환합니다.
  */
-function getRemainingSeconds(regDateStr?: string): number {
-  if (!regDateStr) return 180;
+function parseDateStrToMs(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+  if (match) {
+    const [, y, m, d, hh, mm, ss] = match.map(Number);
+    return new Date(y, m - 1, d, hh, mm, ss).getTime();
+  }
+  const parsed = new Date(dateStr).getTime();
+  return isNaN(parsed) ? null : parsed;
+}
 
-  // "YYYY-MM-DD HH:mm:ss" 또는 "YYYY-MM-DDTHH:mm:ss" 파싱
-  const match = regDateStr.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
-  if (!match) return 180;
-
-  const [, y, m, d, hh, mm, ss] = match.map(Number);
-  const serverTime = new Date(y, m - 1, d, hh, mm, ss).getTime();
+/**
+ * 서버의 end_date를 기준으로 만료 타임스탬프(ms)를 계산합니다.
+ * 과거 더미 데이터(예: 2024년 테스트값)인 경우 세션스토리지에 현재 PIN 코드 기준 만료 시각을 앵커링하여
+ * 창을 최소화하거나 나갔다 오더라도 일관되게 정확한 남은 시간을 계산할 수 있도록 보장합니다.
+ */
+function getTargetEndTimeMs(endDateStr?: string, code?: string): number {
+  const endMs = parseDateStrToMs(endDateStr);
   const now = Date.now();
-  const elapsedSec = Math.floor((now - serverTime) / 1000);
 
-  // 24시간 이상 과거 날짜 (예: "2024-09-04 14:11:15" 같은 더미/테스트 데이터)인 경우:
-  // 테스트를 위해 180초 카운트다운 제공
-  if (Math.abs(elapsedSec) > 86400) {
-    return 180;
+  // 1) 정상적인 최근 24시간 내 타임스탬프인 경우: end_date 그대로 사용
+  if (endMs !== null && Math.abs(endMs - now) <= 86400 * 1000) {
+    return endMs;
   }
 
-  const remaining = 180 - elapsedSec;
-  return remaining > 0 ? remaining : 0;
+  // 2) 과거 더미 데이터인 경우: 세션에 앵커링된 만료 시각이 있는지 확인하여 일관성 유지
+  const cacheKey = `tango_target_end_${code || 'default'}`;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const parsedCached = Number(cached);
+      if (!isNaN(parsedCached)) return parsedCached;
+    }
+    const fallbackTarget = now + 180 * 1000;
+    sessionStorage.setItem(cacheKey, String(fallbackTarget));
+    return fallbackTarget;
+  } catch {
+    return now + 180 * 1000;
+  }
+}
+
+/**
+ * 목표 만료 시각(ms)으로부터 현재 시점의 남은 초(s)를 계산합니다.
+ */
+function calculateRemainingSeconds(targetMs: number): number {
+  const diffSec = Math.floor((targetMs - Date.now()) / 1000);
+  return diffSec > 0 ? diffSec : 0;
 }
 
 export const ResponsePage: React.FC = () => {
@@ -44,39 +69,59 @@ export const ResponsePage: React.FC = () => {
   const currentData: AuthResponse = authData || {
     six_digit_code: '849201',
     reg_date: '2024-09-04 14:11:15',
+    end_date: '2024-09-04 14:14:15',
   };
 
   const pinCode = currentData.six_digit_code;
 
-  // 3분(180초) 카운트다운 타이머 상태
+  // 서버의 end_date를 기준으로 산출한 목표 만료 시각(ms)
+  const targetEndTimeMs = getTargetEndTimeMs(
+    currentData.end_date,
+    currentData.six_digit_code
+  );
+
+  // end_date 기준 실시간 잔여 초(s) 상태
   const [timeLeft, setTimeLeft] = useState<number>(() =>
-    getRemainingSeconds(currentData.reg_date)
+    calculateRemainingSeconds(targetEndTimeMs)
   );
   const [isReissuing, setIsReissuing] = useState(false);
   const [reissueError, setReissueError] = useState<string | null>(null);
 
-  // 발급 시각(reg_date) 또는 PIN 번호 갱신 시 타이머 재설정
+  // 1) 매 1초마다 end_date(targetEndTimeMs)와 Date.now()의 차이를 직접 계산하여 갱신
+  // 2) 브라우저 탭 최소화/백그라운드 전환 후 복귀(visibilitychange, focus, pageshow) 시 즉시 재계산
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTimeLeft(getRemainingSeconds(currentData.reg_date));
-  }, [currentData.reg_date, currentData.six_digit_code]);
+    const updateTime = () => {
+      const remaining = calculateRemainingSeconds(targetEndTimeMs);
+      setTimeLeft(remaining);
+      return remaining;
+    };
 
-  // 1초 주기 타이머 카운트다운
-  useEffect(() => {
-    if (timeLeft <= 0) return;
+    // 초기 및 포커스 복귀 이벤트 핸들러
+    const handleSync = () => {
+      updateTime();
+    };
 
+    updateTime();
+
+    // 1초 인터벌: prev - 1이 아니라 항상 targetEndTimeMs - Date.now()로 절대 시간 계산
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = updateTime();
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [timeLeft]);
+    document.addEventListener('visibilitychange', handleSync);
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('pageshow', handleSync);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleSync);
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('pageshow', handleSync);
+    };
+  }, [targetEndTimeMs]);
 
   // Screen Wake Lock API: 키오스크 스캔 중 화면 어두워짐/꺼짐 자동 방지
   useEffect(() => {
@@ -106,6 +151,7 @@ export const ResponsePage: React.FC = () => {
 
   const handleBackToLogin = () => {
     sessionStorage.removeItem('tango_last_credentials');
+    sessionStorage.removeItem(`tango_target_end_${currentData.six_digit_code}`);
     clearAuth();
     navigate('/login');
   };
@@ -126,17 +172,20 @@ export const ResponsePage: React.FC = () => {
           pin_password,
         });
 
+        sessionStorage.removeItem(`tango_target_end_${currentData.six_digit_code}`);
         setAuthData(freshRes);
-        setTimeLeft(180);
       } else {
         // 자격증명이 없는 경우 (직접 URL 접근 등 테스트 대비)
         const dummyCode = Math.floor(100000 + Math.random() * 900000).toString();
         const newRegDate = formatNow();
+        const newEndDate = formatEndDate(newRegDate);
+
+        sessionStorage.removeItem(`tango_target_end_${currentData.six_digit_code}`);
         setAuthData({
           six_digit_code: dummyCode,
           reg_date: newRegDate,
+          end_date: newEndDate,
         });
-        setTimeLeft(180);
       }
     } catch (err: unknown) {
       if (err instanceof ApiError) {

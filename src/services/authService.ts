@@ -64,6 +64,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   six_digit_code: string;        // 키오스크/응답 화면에 크게 보여줄 6자리 PIN 번호
   reg_date: string;              // "2024-09-04 14:11:15"
+  end_date: string;
 }
 
 /**
@@ -147,6 +148,27 @@ export function formatNow(): string {
 }
 
 /**
+ * 시작 시각 또는 현재 시각 기준으로 3분 후를 "YYYY-MM-DD HH:mm:ss" 형식으로 반환 (더미 및 기본값)
+ */
+export function formatEndDate(startDateStr?: string): string {
+  let d: Date;
+  if (startDateStr) {
+    const match = startDateStr.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+    if (match) {
+      const [, y, m, day, hh, mm, ss] = match.map(Number);
+      d = new Date(y, m - 1, day, hh, mm, ss);
+    } else {
+      d = new Date();
+    }
+  } else {
+    d = new Date();
+  }
+  d.setMinutes(d.getMinutes() + 3);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/**
  * 중첩 배열(string[][] | string[]) 형태의 에러 메시지를 1차원 string[] 배열로 정규화
  */
 function normalizeServerMessages(rawMessage: unknown): string[] {
@@ -222,10 +244,12 @@ export async function loginApi(params: LoginRequest): Promise<AuthResponse> {
 
   const sixDigitCode = String(rawItem?.six_digit_code || '');
   const regDate = String(rawItem?.reg_date || formatNow());
+  const endDate = String(rawItem?.end_date || formatEndDate(regDate));
 
   return {
     six_digit_code: sixDigitCode,
     reg_date: regDate,
+    end_date: endDate,
   };
 }
 
@@ -254,9 +278,11 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
     }
 
     const dummyCode = generateDummy6DigitPin();
+    const nowStr = formatNow();
     return {
       six_digit_code: dummyCode,
-      reg_date: formatNow(),
+      reg_date: nowStr,
+      end_date: formatEndDate(nowStr),
     };
   }
 
@@ -320,10 +346,12 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
 
   const sixDigitCode = String(rawItem?.six_digit_code || '');
   const regDate = String(rawItem?.reg_date || formatNow());
+  const endDate = String(rawItem?.end_date || formatEndDate(regDate));
 
   return {
     six_digit_code: sixDigitCode,
     reg_date: regDate,
+    end_date: endDate,
   };
 }
 
