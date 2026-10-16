@@ -26,6 +26,7 @@ export const az = {
     submitting: 'Daxil olunur...',
     noAccount: 'Hələ hesabınız yoxdur?',
     goToSignUp: 'Qeydiyyatdan keç',
+    changePin: 'PIN-i dəyişdir',
     validation: {
       emailRequired: 'Zəhmət olmasa e-poçtunuzu daxil edin.',
       emailInvalid: 'E-poçt formatını yoxlayın. (məs: example@domain.com)',

@@ -26,6 +26,7 @@ export const ko = {
     submitting: '로그인 중...',
     noAccount: '아직 계정이 없으신가요?',
     goToSignUp: '회원가입',
+    changePin: 'PIN 찾기',
     validation: {
       emailRequired: '이메일을 입력해주세요.',
       emailInvalid: '이메일 형식을 확인해주세요. (예: example@domain.com)',

@@ -26,6 +26,7 @@ export const ru = {
     submitting: 'Вход...',
     noAccount: 'Еще нет аккаунта?',
     goToSignUp: 'Зарегистрироваться',
+    changePin: 'Изменить PIN',
     validation: {
       emailRequired: 'Пожалуйста, введите адрес эл. почты.',
       emailInvalid: 'Проверьте формат эл. почты (напр. example@domain.com).',

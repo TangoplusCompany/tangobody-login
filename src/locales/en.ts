@@ -26,6 +26,7 @@ export const en = {
     submitting: 'Signing in...',
     noAccount: "Don't have an account?",
     goToSignUp: 'Sign Up',
+    changePin: 'Change PIN',
     validation: {
       emailRequired: 'Please enter your email.',
       emailInvalid: 'Please check the email format (e.g. example@domain.com).',

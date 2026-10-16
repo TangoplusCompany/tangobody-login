@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Calendar, Phone, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X, ExternalLink } from 'lucide-react';
+import { Mail, Calendar, Phone, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { authApi, RegisterApiError, ApiError } from '../api/auth';
 import type { RegisterRequest } from '../api/auth';
 import { CountryCodeModal } from '../components/CountryCodeModal';
+import { PinCodeInput } from '../components/PinCodeInput';
 import { getDefaultCountryByLanguage } from '../data/countries';
 import type { Country } from '../data/countries';
 
@@ -206,81 +207,61 @@ export const RegisterPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. PIN 번호 & 확인 (필수 4자리) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
-              <span>{t.signUp.pinLabel}</span>
-              <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder={t.signUp.pinPlaceholder}
-                value={pin}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9]/g, '');
-                  if (val.length <= 4) setPin(val);
-                }}
-                disabled={isLoading}
-                className="w-full pl-11 pr-4 py-3 bg-gray-50/80 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:bg-white transition-all tracking-widest font-mono text-sm"
-              />
-            </div>
-          </div>
+        {/* 2. PIN 번호 (ㅁ ㅁ ㅁ ㅁ) */}
+        <div>
+          <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
+            <span>{t.signUp.pinLabel}</span>
+            <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
+          </label>
+          <PinCodeInput
+            id="register-pin"
+            value={pin}
+            onChange={setPin}
+            disabled={isLoading}
+          />
+        </div>
 
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
-              <span>{t.signUp.pinConfirmLabel}</span>
-              <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder={t.signUp.pinConfirmPlaceholder}
-                value={pinConfirm}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9]/g, '');
-                  if (val.length <= 4) setPinConfirm(val);
-                }}
-                disabled={isLoading}
-                className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none transition-all tracking-widest font-mono text-sm ${
-                  pinConfirm.length > 0
-                    ? pin === pinConfirm
-                      ? 'border-[#00E676] focus:ring-2 focus:ring-[#00E676]/40 focus:bg-white'
-                      : 'border-red-400 focus:ring-2 focus:ring-red-400/40 focus:bg-white'
-                    : 'border-gray-200 focus:ring-2 focus:ring-brand-blue focus:bg-white'
-                }`}
-              />
-            </div>
-            {/* 실시간 PIN 일치/불일치 상태 안내 (네온초록색 - 빨간색) */}
-            {pinConfirm.length > 0 && (
-              <p
-                className={`text-[11px] mt-1.5 pl-1 flex items-center gap-1 font-semibold transition-all duration-150 ${
-                  pin === pinConfirm
-                    ? 'text-[#00C853] dark:text-[#00E676]'
-                    : 'text-red-500'
-                }`}
-              >
-                {pin === pinConfirm ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                    <span>{t.signUp.pinMatch}</span>
-                  </>
-                ) : (
-                  <>
-                    <X className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                    <span>{t.signUp.pinMismatch}</span>
-                  </>
-                )}
-              </p>
-            )}
-          </div>
+        {/* PIN 번호 확인 (ㅁ ㅁ ㅁ ㅁ) */}
+        <div>
+          <label className="flex items-center justify-between text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
+            <span>{t.signUp.pinConfirmLabel}</span>
+            <span className="text-red-500 text-[11px] font-bold">*{t.signUp.required}</span>
+          </label>
+          <PinCodeInput
+            id="register-pin-confirm"
+            value={pinConfirm}
+            onChange={setPinConfirm}
+            disabled={isLoading}
+            status={
+              pinConfirm.length > 0
+                ? pin === pinConfirm
+                  ? 'success'
+                  : 'error'
+                : 'default'
+            }
+          />
+          {/* 실시간 PIN 일치/불일치 상태 안내 (네온초록색 - 빨간색) */}
+          {pinConfirm.length > 0 && (
+            <p
+              className={`text-[11px] mt-1.5 pl-1 flex items-center gap-1 font-semibold transition-all duration-150 ${
+                pin === pinConfirm
+                  ? 'text-[#00C853] dark:text-[#00E676]'
+                  : 'text-red-500'
+              }`}
+            >
+              {pin === pinConfirm ? (
+                <>
+                  <Check className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                  <span>{t.signUp.pinMatch}</span>
+                </>
+              ) : (
+                <>
+                  <X className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                  <span>{t.signUp.pinMismatch}</span>
+                </>
+              )}
+            </p>
+          )}
         </div>
 
         {/* 3. 이름 (이름 & 성 2칸 분리, 필수) */}

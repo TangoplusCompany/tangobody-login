@@ -26,6 +26,7 @@ export const es = {
     submitting: 'Iniciando sesión...',
     noAccount: '¿No tienes una cuenta?',
     goToSignUp: 'Regístrate',
+    changePin: 'Cambiar PIN',
     validation: {
       emailRequired: 'Por favor, introduce tu correo electrónico.',
       emailInvalid: 'Verifica el formato del correo. (ej. example@domain.com)',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock,ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
@@ -102,11 +102,22 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4자리 PIN 입력 */}
+        {/* 4자리 PIN 입력 및 PIN 변경 링크 */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5 pl-1">
-            {t.login.pinLabel}
-          </label>
+          <div className="flex items-center justify-between mb-1.5 pl-1">
+            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              {t.login.pinLabel}
+            </label>
+            <a
+              href="https://my.tangobody.co.kr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-brand-blue hover:text-brand-blue-hover hover:underline inline-flex items-center gap-1 transition-colors"
+            >
+              <span>{t.login.changePin}</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
             <input
@@ -154,17 +165,27 @@ export const LoginPage: React.FC = () => {
         </button>
       </form>
 
-      {/* 회원가입 링크 */}
-      <div className="mt-4 pt-2 border-t border-gray-100 text-center">
-        <p className="text-sm sm:text-sm text-gray-500">
+      {/* 회원가입 및 PIN 변경 링크 */}
+      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-center gap-3 text-xs sm:text-sm text-gray-500">
+        <p>
           {t.login.noAccount}{' '}
           <Link
             to="/signup"
-            className="font-semibold text-[#2C4FD0] hover:underline inline-flex items-center gap-1 ml-1 py-4 px-2"
+            className="font-semibold text-brand-blue hover:underline ml-0.5"
           >
             {t.login.goToSignUp}
           </Link>
         </p>
+        <span className="text-gray-300">|</span>
+        <a
+          href="https://my.tangobody.co.kr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gray-600 hover:text-brand-blue hover:underline inline-flex items-center gap-1 transition-colors"
+        >
+          <span>{t.login.changePin}</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
       </div>
     </div>
   );
