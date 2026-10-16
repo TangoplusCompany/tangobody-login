@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Calendar, Phone, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X } from 'lucide-react';
+import { Mail, Lock, Calendar, Phone, ArrowLeft, Loader2, AlertCircle, ChevronDown, User, Check, X, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
@@ -433,18 +433,28 @@ export const RegisterPage: React.FC = () => {
 
         {/* 7. 개인정보 수집 및 이용 동의 (필수 체크 항목) */}
         <div className="pt-1">
-          <label className="flex items-start gap-2.5 p-3 bg-gray-50/90 hover:bg-gray-100/80 border border-gray-200 rounded-xl cursor-pointer transition-colors select-none">
+          <div className="flex items-start gap-2.5 p-3 bg-gray-50/90 hover:bg-gray-100/80 border border-gray-200 rounded-xl transition-colors">
             <input
+              id="privacy-consent"
               type="checkbox"
               checked={agreedPrivacy}
               onChange={(e) => setAgreedPrivacy(e.target.checked)}
               disabled={isLoading}
               className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue shrink-0 cursor-pointer accent-brand-blue"
             />
-            <span className="text-xs text-gray-700 leading-relaxed font-medium">
-              {t.signUp.privacyConsent}
-            </span>
-          </label>
+            <div className="flex-1 text-xs text-gray-700 leading-relaxed font-medium">
+              <a
+                href="https://tangobody-terms.vercel.app/my_page/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-brand-blue underline underline-offset-2 decoration-gray-300 hover:decoration-brand-blue transition-colors inline-flex items-center gap-1 group flex-wrap cursor-pointer"
+                title="TangoBody 개인정보 처리방침 보기"
+              >
+                <span>{t.signUp.privacyConsent}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-brand-blue shrink-0 transition-colors inline-block" />
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* 에러 메시지 */}
