@@ -25,7 +25,7 @@ export const API_CONFIG = {
   // API 엔드포인트 URL 경로
   ENDPOINTS: {
     LOGIN: '/login-foreign-member',        
-    REGISTER: '/register-foreign-member',   
+    REGISTER: '/register-member',   
   },
 
   // 더미(Mock) 모드 사용 여부 (백엔드 완성 시 false로 변경하세요!)
