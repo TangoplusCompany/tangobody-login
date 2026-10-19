@@ -106,6 +106,10 @@ export const es = {
     reissue: 'Reemitir',
     reissuing: 'Reemitiendo...',
     reissueFailed: 'Error al reemitir el PIN. Inténtelo de nuevo.',
+    scanCompletedTitle: '¡Escaneo completado!',
+    scanCompletedDesc: 'La autenticación en el quiosco se ha completado con éxito.',
+    scanCompletedCountdownSuffix: 's para volver al inicio de sesión.',
+    goToLoginNow: 'Ir al inicio de sesión ahora',
   },
 };
 

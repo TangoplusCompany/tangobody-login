@@ -37,7 +37,6 @@ export const en = {
     },
   },
 
-  // Sign Up Page
   signUp: {
     title: 'Create Account',
     subtitle: 'Start your healthy journey with Tangobody',
@@ -106,6 +105,10 @@ export const en = {
     reissue: 'Re-issue',
     reissuing: 'Re-issuing...',
     reissueFailed: 'Failed to re-issue PIN. Please try again.',
+    scanCompletedTitle: 'Scan Complete!',
+    scanCompletedDesc: 'Kiosk authentication has been successfully completed.',
+    scanCompletedCountdownSuffix: 's until redirecting to login.',
+    goToLoginNow: 'Go to Login Now',
   },
 };
 

@@ -106,6 +106,10 @@ export const ru = {
     reissue: 'Перевыпустить',
     reissuing: 'Выпуск...',
     reissueFailed: 'Не удалось перевыпустить PIN. Повторите попытку.',
+    scanCompletedTitle: 'Сканирование завершено!',
+    scanCompletedDesc: 'Авторизация на киоске успешно завершена.',
+    scanCompletedCountdownSuffix: ' сек. до перехода на страницу входа.',
+    goToLoginNow: 'Перейти ко входу',
   },
 };
 

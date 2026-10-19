@@ -150,7 +150,7 @@ export const RegisterPage: React.FC = () => {
 
       const res = await authApi.register(registerPayload);
 
-      sessionStorage.setItem('tango_last_credentials', JSON.stringify({ email: email.trim(), pin_password: pin.trim() }));
+      sessionStorage.setItem('tango_last_credentials', JSON.stringify({ email: email.trim(), pin_password: pin.trim(), user_sn: res.user_sn }));
       setAuthData(res);
       navigate('/response');
     } catch (err: unknown) {

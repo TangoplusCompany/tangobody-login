@@ -106,6 +106,10 @@ export const ko = {
     reissue: '새로 발급',
     reissuing: '발급 중...',
     reissueFailed: 'PIN 재발급에 실패했습니다. 다시 시도해주세요.',
+    scanCompletedTitle: '스캔이 완료되었습니다!',
+    scanCompletedDesc: '키오스크 인증이 정상적으로 완료되었습니다.',
+    scanCompletedCountdownSuffix: '초 후 로그인 화면으로 이동합니다.',
+    goToLoginNow: '로그인 화면으로 이동',
   },
 };
 

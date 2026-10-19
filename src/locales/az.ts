@@ -106,5 +106,9 @@ export const az = {
     reissue: 'Yenidən al',
     reissuing: 'Yenilənir...',
     reissueFailed: 'Yeni PIN almaq alınmadı. Yenidən cəhd edin.',
+    scanCompletedTitle: 'Skanlama tamamlandı!',
+    scanCompletedDesc: 'Köşk autentifikasiyası uğurla tamamlandı.',
+    scanCompletedCountdownSuffix: ' saniyə sonra giriş səhifəsinə yönləndirilirsiniz.',
+    goToLoginNow: 'İndi daxil ol',
   },
 };

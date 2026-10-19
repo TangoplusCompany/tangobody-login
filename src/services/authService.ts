@@ -26,6 +26,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     LOGIN: '/login-foreign-member',        
     REGISTER: '/register-member',   
+    QR_CODE_STATUS: (user_sn: string | number) => `/qr-code-status/users/${user_sn}`,
   },
 
   // 더미(Mock) 모드 사용 여부 (백엔드 완성 시 false로 변경하세요!)
@@ -65,6 +66,20 @@ export interface AuthResponse {
   six_digit_code: string;        // 키오스크/응답 화면에 크게 보여줄 6자리 PIN 번호
   reg_date: string;              // "2024-09-04 14:11:15"
   end_date: string;
+  user_sn?: string;              // 사용자 식별 번호 (QR 상태 확인용)
+}
+
+/** QR 코드 상태 확인 요청 데이터 */
+export interface QrCodeStatusRequest {
+  user_id: string;
+  user_password: string;
+}
+
+/** QR 코드 상태 확인 응답 데이터 */
+export interface QrCodeStatusResult {
+  isCompleted: boolean; // 403(status=3)인 경우 true, 200(status=1)인 경우 false
+  status: number;
+  message?: string[];
 }
 
 /**
@@ -245,11 +260,18 @@ export async function loginApi(params: LoginRequest): Promise<AuthResponse> {
   const sixDigitCode = String(rawItem?.six_digit_code || '');
   const regDate = String(rawItem?.reg_date || formatNow());
   const endDate = String(rawItem?.end_date || formatEndDate(regDate));
+  const rawUserSn = rawItem?.user_sn ?? responseData?.user_sn;
+  const userSn = rawUserSn !== undefined && rawUserSn !== null
+    ? String(rawUserSn)
+    : undefined;
+
+  console.log('[Auth API] Login parsed response:', { sixDigitCode, regDate, endDate, userSn });
 
   return {
     six_digit_code: sixDigitCode,
     reg_date: regDate,
     end_date: endDate,
+    user_sn: userSn,
   };
 }
 
@@ -283,6 +305,7 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
       six_digit_code: dummyCode,
       reg_date: nowStr,
       end_date: formatEndDate(nowStr),
+      user_sn: '1',
     };
   }
 
@@ -347,11 +370,104 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
   const sixDigitCode = String(rawItem?.six_digit_code || '');
   const regDate = String(rawItem?.reg_date || formatNow());
   const endDate = String(rawItem?.end_date || formatEndDate(regDate));
+  const userSn = rawItem?.user_sn !== undefined && rawItem?.user_sn !== null
+    ? String(rawItem.user_sn)
+    : undefined;
 
   return {
     six_digit_code: sixDigitCode,
     reg_date: regDate,
     end_date: endDate,
+    user_sn: userSn,
+  };
+}
+
+/**
+ * [API 3] QR 코드 스캔 상태 확인 요청 (POST /qr-code-status/users/{user_sn})
+ * 
+ * 응답 규격:
+ * 1. 계속 사용 가능한 경우 (status = 1 또는 HTTP 200)
+ *    { "status": 200, "success": true, "message": ["QR code still in use"] }
+ *    -> isCompleted: false
+ * 
+ * 2. 사용 완료/스캔 완료인 경우 (status = 3 또는 HTTP 403)
+ *    { "status": 403, "success": false, "message": ["QR code no longer in use"], "data": [] }
+ *    -> isCompleted: true
+ */
+export async function checkQrCodeStatusApi(
+  userSn: string | number,
+): Promise<QrCodeStatusResult> {
+  if (API_CONFIG.USE_MOCK) {
+    return {
+      isCompleted: false,
+      status: 200,
+      message: ['QR code still in use'],
+    };
+  }
+
+  const endpointPath = typeof API_CONFIG.ENDPOINTS.QR_CODE_STATUS === 'function'
+    ? API_CONFIG.ENDPOINTS.QR_CODE_STATUS(userSn)
+    : `/qr-code-status/users/${userSn}`;
+
+  const url = `${API_CONFIG.BASE_URL}${endpointPath}`;
+
+  console.log('[QR Status Check] Requesting (GET):', url);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+  } catch (err: unknown) {
+    console.warn('[QR Status Check] Network error:', err);
+    return { isCompleted: false, status: 0 };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let responseData: any = null;
+  try {
+    responseData = await response.json();
+  } catch {
+    // ignore
+  }
+
+  console.log('[QR Status Check] Response:', response.status, responseData);
+
+  const statusCode: number = Number(responseData?.status) || response.status;
+  const messages = normalizeServerMessages(responseData?.message);
+
+  // 1) 403 또는 status=3, 또는 메시지에 "no longer in use": 사용 완료 (스캔 완료)
+  const isCompleted =
+    statusCode === 403 ||
+    statusCode === 3 ||
+    response.status === 403 ||
+    messages.some((m) => typeof m === 'string' && m.toLowerCase().includes('no longer in use'));
+
+  if (isCompleted) {
+    console.log('[QR Status Check] => COMPLETED! (status:', statusCode, ')');
+    return {
+      isCompleted: true,
+      status: statusCode,
+      message: messages,
+    };
+  }
+
+  // 2) 200 또는 status=1: 아직 스캔 전, 계속 사용 가능
+  if (statusCode === 200 || statusCode === 1 || (response.ok && responseData?.success === true)) {
+    return {
+      isCompleted: false,
+      status: statusCode,
+      message: messages,
+    };
+  }
+
+  return {
+    isCompleted: false,
+    status: statusCode,
+    message: messages,
   };
 }
 
@@ -361,4 +477,5 @@ export async function registerApi(params: RegisterRequest): Promise<AuthResponse
 export const authApi = {
   login: loginApi,
   register: registerApi,
+  checkQrCodeStatus: checkQrCodeStatusApi,
 };
